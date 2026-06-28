@@ -9,8 +9,28 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR"
 
+# Auto-locate project root if executed from home directory or external folder
+if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
+    for dir in "$SCRIPT_DIR/Website" "$SCRIPT_DIR/TrafficAI" "$SCRIPT_DIR/traffic-ai" "$HOME/Website" "$HOME/TrafficAI" "$HOME/traffic-ai"; do
+        if [ -d "$dir/backend" ] && [ -d "$dir/frontend" ]; then
+            SCRIPT_DIR="$dir"
+            cd "$SCRIPT_DIR"
+            break
+        fi
+    done
+fi
+
+if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
+    FOUND_DIR=$(find "$HOME" -maxdepth 3 -type d -name "backend" 2>/dev/null | head -n 1 | xargs dirname 2>/dev/null || true)
+    if [ -n "$FOUND_DIR" ] && [ -d "$FOUND_DIR/frontend" ]; then
+        SCRIPT_DIR="$FOUND_DIR"
+        cd "$SCRIPT_DIR"
+    fi
+fi
+
 echo "=============================================================================="
 echo "🚀 Starting TrafficAI AWS EC2 Build & PM2 Deployment..."
+echo "📂 Working Directory: $PWD"
 echo "=============================================================================="
 
 # 1. System Updates & Prerequisites
@@ -56,6 +76,8 @@ if [ -d "backend" ]; then
     cd "$SCRIPT_DIR/backend"
     mvn clean compile || true
     cd "$SCRIPT_DIR"
+else
+    echo "  ⚠️ Warning: 'backend' directory not found!"
 fi
 
 # Build React Frontend
@@ -65,6 +87,8 @@ if [ -d "frontend" ]; then
     npm install
     npm run build
     cd "$SCRIPT_DIR"
+else
+    echo "  ⚠️ Warning: 'frontend' directory not found!"
 fi
 
 # 4. Start Services under PM2 Process Supervisor
