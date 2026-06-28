@@ -117,6 +117,13 @@ public class TrafficDetectionServer {
                 String minCropPx = formParams.getOrDefault("min_crop_px", "120");
 
                 // Determine python executable and script path
+                String pythonCmd = "python3";
+                if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                    pythonCmd = "python";
+                } else if (!new File("/usr/bin/python3").exists() && !new File("/usr/local/bin/python3").exists()) {
+                    pythonCmd = "python";
+                }
+
                 File currentDir = new File(".").getCanonicalFile();
                 File scriptFile = new File(currentDir, "python_pipeline/pipeline.py");
                 if (!scriptFile.exists()) {
@@ -124,7 +131,7 @@ public class TrafficDetectionServer {
                 }
 
                 ProcessBuilder pb = new ProcessBuilder(
-                        "python",
+                        pythonCmd,
                         scriptFile.getAbsolutePath(),
                         "--input", tempImage.getAbsolutePath(),
                         "--yolo_conf", yoloConf,
