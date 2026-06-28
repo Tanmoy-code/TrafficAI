@@ -24,10 +24,12 @@ public class AuthHandler implements HttpHandler {
 
         String path = exchange.getRequestURI().getPath();
 
-        if (path.endsWith("/login") && "POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+        if (path.contains("/login") && "POST".equalsIgnoreCase(exchange.getRequestMethod())) {
             handleLogin(exchange);
-        } else if (path.endsWith("/verify") && ("GET".equalsIgnoreCase(exchange.getRequestMethod()) || "POST".equalsIgnoreCase(exchange.getRequestMethod()))) {
+        } else if (path.contains("/verify") && ("GET".equalsIgnoreCase(exchange.getRequestMethod()) || "POST".equalsIgnoreCase(exchange.getRequestMethod()))) {
             handleVerify(exchange);
+        } else if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            handleLogin(exchange);
         } else {
             sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
         }

@@ -30,6 +30,8 @@ public class TrafficDetectionServer {
         server.createContext("/api/settings", new SettingsHandler());
         server.createContext("/api/detect", new DetectHandler());
         server.createContext("/api/history", new HistoryHandler());
+        server.createContext("/api/auth/login", new AuthHandler());
+        server.createContext("/api/auth/verify", new AuthHandler());
         server.createContext("/api/auth", new AuthHandler());
         server.createContext("/api/users", new UserManagementHandler());
 
