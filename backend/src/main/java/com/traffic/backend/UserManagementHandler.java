@@ -16,7 +16,9 @@ public class UserManagementHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         enableCORS(exchange);
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
+            exchange.sendResponseHeaders(200, 0);
+            OutputStream os = exchange.getResponseBody();
+            os.close();
             return;
         }
 
@@ -164,9 +166,9 @@ public class UserManagementHandler implements HttpHandler {
     }
 
     private void enableCORS(HttpExchange exchange) {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     }
 
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
