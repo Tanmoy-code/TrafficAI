@@ -41,7 +41,8 @@ export default function Home({ onAnalysisComplete, settings }) {
     formData.append('min_crop_px', settings.min_crop_px.toString());
 
     try {
-      const res = await fetch('http://localhost:5000/api/detect', {
+      const backendHost = window.location.hostname || 'localhost';
+      const res = await fetch(`http://${backendHost}:5000/api/detect`, {
         method: 'POST',
         body: formData,
       });
