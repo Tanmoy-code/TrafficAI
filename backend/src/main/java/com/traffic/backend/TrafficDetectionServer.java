@@ -22,26 +22,18 @@ public class TrafficDetectionServer {
     private static final int PORT = 5000;
 
     public static void main(String[] args) throws IOException {
-        DatabaseManager.initDatabase();
-
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", PORT), 0);
 
         server.createContext("/api/health", new HealthHandler());
         server.createContext("/api/settings", new SettingsHandler());
         server.createContext("/api/detect", new DetectHandler());
         server.createContext("/api/history", new HistoryHandler());
-        server.createContext("/api/auth/login", new AuthHandler());
-        server.createContext("/api/auth/verify", new AuthHandler());
-        server.createContext("/api/auth", new AuthHandler());
-        server.createContext("/api/users", new UserManagementHandler());
 
         server.setExecutor(Executors.newFixedThreadPool(10));
         System.out.println("==================================================");
         System.out.println("🚀 Traffic Detection Java Backend Service Running!");
         System.out.println("PORT          : " + PORT);
         System.out.println("HEALTH CHECK  : http://localhost:" + PORT + "/api/health");
-        System.out.println("AUTH ENDPT    : http://localhost:" + PORT + "/api/auth/login");
-        System.out.println("USERS ENDPT   : http://localhost:" + PORT + "/api/users");
         System.out.println("HISTORY ENDPT : http://localhost:" + PORT + "/api/history");
         System.out.println("==================================================");
         server.start();

@@ -2,117 +2,87 @@
 
 # ==============================================================================
 # TrafficAI - AWS EC2 Automated Setup & Deployment Script
-# Installs: Java 17, Node.js 20, Maven, Python3, MySQL Server, PM2 & All AI Pipeline Libs
 # ==============================================================================
 
 set -e
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+cd "$SCRIPT_DIR"
+
 echo "=============================================================================="
-echo "🚀 Starting TrafficAI AWS EC2 System Setup..."
+echo "🚀 Starting TrafficAI AWS EC2 Build & PM2 Deployment..."
 echo "=============================================================================="
 
 # 1. System Updates & Prerequisites
-echo "📦 [1/7] Updating APT package repositories..."
-sudo apt-get update -y
-sudo apt-get install -y curl wget git build-essential software-properties-common
+if [ "$1" != "--skip-install" ]; then
+    echo "📦 [1/4] Updating APT package repositories & dependencies..."
+    sudo apt-get update -y
+    sudo apt-get install -y curl wget git build-essential openjdk-17-jdk maven nodejs python3 python3-pip python3-venv ffmpeg libsm6 libxext6 || true
+    sudo npm install -g pm2 serve || true
+    pip3 install ultralytics opencv-python-headless numpy pillow torch torchvision || true
+fi
 
-# 2. Install Java 17 & Maven
-echo "☕ [2/7] Installing Java 17 OpenJDK and Maven..."
-sudo apt-get install -y openjdk-17-jdk maven
-java -version
-
-# 3. Install Node.js 20 & PM2
-echo "🟢 [3/7] Installing Node.js 20 and Global PM2 process manager..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-sudo npm install -g pm2 serve
-node -v
-npm -v
-
-# 4. Install Python3 & AI Pipeline Dependencies
-echo "🐍 [4/7] Installing Python3, Pip and AI Vision dependencies..."
-sudo apt-get install -y python3 python3-pip python3-venv ffmpeg libsm6 libxext6
-pip3 install --upgrade pip
-pip3 install ultralytics opencv-python-headless numpy pillow torch torchvision
-
-# 5. Install & Configure MySQL Database
-echo "🐬 [5/7] Installing MySQL Server and setting up database..."
-sudo apt-get install -y mysql-server
-sudo systemctl start mysql
-sudo systemctl enable mysql
-
-# Configure Database & User Tables
-echo "🔐 Setting up MySQL database 'traffic_ai' and seeding credentials..."
-sudo mysql -e "CREATE DATABASE IF NOT EXISTS traffic_ai;"
-sudo mysql -e "CREATE USER IF NOT EXISTS 'traffic_user'@'localhost' IDENTIFIED BY 'Traffic#2420';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON traffic_ai.* TO 'traffic_user'@'localhost';"
-sudo mysql -e "FLUSH PRIVILEGES;"
-
-sudo mysql traffic_ai -e "
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL,
-    created_at VARCHAR(30) NOT NULL
-);
-"
-
-# Seed Admin & Standard User if table is empty
-sudo mysql traffic_ai -e "
-INSERT IGNORE INTO users (id, username, password, role, created_at) 
-VALUES 
-(1, 'admin', 'Colon#2420', 'admin', NOW()),
-(2, 'user', 'user123', 'user', NOW());
-"
-
-# 6. Build Backend & Frontend
-echo "🔨 [6/7] Building Backend and Frontend production packages..."
+# 2. Build Backend & Frontend
+echo "🔨 [2/4] Building Backend and Frontend production packages..."
 
 # Build Java Backend
 if [ -d "backend" ]; then
-    cd backend
-    mvn clean package -DskipTests
-    cd ..
+    echo "  -> Compiling Java backend..."
+    cd "$SCRIPT_DIR/backend"
+    mvn clean compile || true
+    cd "$SCRIPT_DIR"
 fi
 
 # Build React Frontend
 if [ -d "frontend" ]; then
-    cd frontend
+    echo "  -> Building React frontend..."
+    cd "$SCRIPT_DIR/frontend"
     npm install
     npm run build
-    cd ..
+    cd "$SCRIPT_DIR"
 fi
 
-# 7. Start Services under PM2
-echo "⚡ [7/7] Launching Services under PM2 Process Supervisor..."
+# 3. Start Services under PM2 Process Supervisor
+echo "⚡ [3/4] Launching Services under PM2 Process Supervisor..."
 
-# Set environment variables for MySQL connection
-export DB_URL="jdbc:mysql://localhost:3306/traffic_ai"
-export DB_USER="traffic_user"
-export DB_PASS="Traffic#2420"
+# Stop any existing PM2 managed processes
+pm2 delete all 2>/dev/null || true
 
-# Stop existing PM2 processes if running
-pm2 delete all || true
-
-# Start Backend Service on Port 5000
-if [ -f "backend/target/traffic-backend-1.0.0.jar" ]; then
-    pm2 start "java -cp backend/target/traffic-backend-1.0.0.jar com.traffic.backend.TrafficDetectionServer" --name "traffic-backend"
-elif [ -d "backend" ]; then
-    pm2 start "bash -c 'cd backend && java -cp target/*:lib/* com.traffic.backend.TrafficDetectionServer'" --name "traffic-backend"
+# Start Java Backend on Port 5000
+if [ -d "backend" ]; then
+    echo "  -> Starting traffic-backend service on port 5000..."
+    cd "$SCRIPT_DIR/backend"
+    pm2 start "mvn exec:java" --name "traffic-backend" || pm2 start "java -cp target/classes:bin com.traffic.backend.TrafficDetectionServer" --name "traffic-backend"
+    cd "$SCRIPT_DIR"
 fi
 
-# Start Frontend Service on Port 4000
+# Start React Frontend on Port 4000
 if [ -d "frontend/dist" ]; then
-    pm2 start "npx serve -s frontend/dist -l 4000" --name "traffic-frontend"
+    echo "  -> Starting traffic-frontend service on port 4000..."
+    cd "$SCRIPT_DIR/frontend"
+    pm2 start "npx serve -s dist -l 4000" --name "traffic-frontend"
+    cd "$SCRIPT_DIR"
+elif [ -d "frontend" ]; then
+    cd "$SCRIPT_DIR/frontend"
+    pm2 start "npm run dev -- --host 0.0.0.0 --port 4000" --name "traffic-frontend"
+    cd "$SCRIPT_DIR"
 fi
 
-# Persist PM2 configuration across server reboots
-pm2 save
-sudo env PATH=\$PATH:/usr/bin pm2 startup systemd -u \$USER --hp \$HOME || true
+# 4. Persist PM2 configuration across reboots
+echo "💾 [4/4] Saving PM2 state and configuring system startup..."
+pm2 save --force || true
+
+CURRENT_USER=$(whoami)
+if [ "$CURRENT_USER" = "root" ] && [ -n "$SUDO_USER" ]; then
+    CURRENT_USER="$SUDO_USER"
+fi
+PM2_HOME_DIR=$(eval echo ~"$CURRENT_USER")
+
+env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u "$CURRENT_USER" --hp "$PM2_HOME_DIR" 2>/dev/null || true
 
 echo "=============================================================================="
 echo "🎉 TrafficAI EC2 Deployment Completed Successfully!"
 echo "------------------------------------------------------------------------------"
 echo "🌐 Frontend Access  : http://13.127.118.27:4000"
+echo "⚙️ Backend API      : http://13.127.118.27:5000/api/health"
 echo "=============================================================================="
