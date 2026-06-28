@@ -1,0 +1,28 @@
+# Node dependencies & build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Java build binaries
+backend/bin/
+backend/target/
+*.class
+*.jar
+
+# Python bytecode, models & generated images
+__pycache__/
+*.pyc
+*.pyo
+yolov8*.pt
+cropped_vehicles/
+*.zip
+
+# Data directory
+data/
+
+# OS & IDE temporary files
+.DS_Store
+.vscode/
+.idea/
+*.log
