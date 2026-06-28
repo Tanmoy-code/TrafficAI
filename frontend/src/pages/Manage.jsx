@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Users, UserPlus, Eye, EyeOff, KeyRound, Trash2, Shield, User, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 
+const getBackendHost = () => typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+
 export default function Manage() {
   const { token } = useAuth();
   const [usersList, setUsersList] = useState([]);
@@ -26,7 +28,7 @@ export default function Manage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(`http://${getBackendHost()}:5000/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -59,7 +61,7 @@ export default function Manage() {
     setSuccessMsg('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(`http://${getBackendHost()}:5000/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +98,7 @@ export default function Manage() {
     setSuccessMsg('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(`http://${getBackendHost()}:5000/api/users`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +130,7 @@ export default function Manage() {
     setSuccessMsg('');
 
     try {
-      const res = await fetch(`http://localhost:5000/api/users?id=${userId}`, {
+      const res = await fetch(`http://${getBackendHost()}:5000/api/users?id=${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

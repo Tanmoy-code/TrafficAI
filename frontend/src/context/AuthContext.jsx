@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const backendHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+const API_BASE_URL = `http://${backendHost}:5000/api`;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
