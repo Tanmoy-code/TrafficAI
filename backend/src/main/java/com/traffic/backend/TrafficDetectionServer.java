@@ -117,12 +117,7 @@ public class TrafficDetectionServer {
                 String minCropPx = formParams.getOrDefault("min_crop_px", "120");
 
                 // Determine python executable and script path
-                String pythonCmd = "python3";
-                if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                    pythonCmd = "python";
-                } else if (!new File("/usr/bin/python3").exists() && !new File("/usr/local/bin/python3").exists()) {
-                    pythonCmd = "python";
-                }
+                String pythonCmd = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
 
                 File currentDir = new File(".").getCanonicalFile();
                 File scriptFile = new File(currentDir, "python_pipeline/pipeline.py");
