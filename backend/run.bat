@@ -14,7 +14,7 @@ if exist "C:\Program Files\Java\jdk-17\bin\javac.exe" (
 )
 
 echo Compiling Java Server...
-%JAVAC_CMD% -d bin src\main\java\com\traffic\backend\TrafficDetectionServer.java
+%JAVAC_CMD% -encoding UTF-8 -d bin src\main\java\com\traffic\backend\*.java
 
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Compilation failed.
