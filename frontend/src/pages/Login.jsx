@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, ShieldCheck, UserCheck, AlertCircle, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, AlertCircle, LogIn, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -19,16 +19,6 @@ export default function Login() {
       navigate('/');
     } else {
       setError(res.error);
-    }
-  };
-
-  const fillCredentials = (userRole) => {
-    if (userRole === 'admin') {
-      setUsername('admin');
-      setPassword('Colon#2420');
-    } else {
-      setUsername('user');
-      setPassword('user123');
     }
   };
 
@@ -95,26 +85,6 @@ export default function Login() {
             <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
           </button>
         </form>
-
-        <div className="demo-credentials-section">
-          <p className="demo-title">Quick Demo Login Presets:</p>
-          <div className="demo-btns">
-            <button 
-              type="button" 
-              className="demo-preset-btn admin-preset"
-              onClick={() => fillCredentials('admin')}
-            >
-              <ShieldCheck size={16} /> Admin Panel (admin / Colon#2420)
-            </button>
-            <button 
-              type="button" 
-              className="demo-preset-btn user-preset"
-              onClick={() => fillCredentials('user')}
-            >
-              <UserCheck size={16} /> User Panel (user / user123)
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
