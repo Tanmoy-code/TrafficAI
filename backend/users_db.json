@@ -1,0 +1,4 @@
+[
+  {"id": 1, "username": "admin", "password": "Colon#2420", "role": "admin", "created_at": "2026-06-28 17:54:39"},
+  {"id": 2, "username": "user", "password": "user123", "role": "user", "created_at": "2026-06-28 17:54:39"}
+]
