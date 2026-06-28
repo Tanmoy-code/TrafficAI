@@ -35,6 +35,7 @@ export default function Home({ onAnalysisComplete, settings }) {
 
     const formData = new FormData();
     formData.append('image', selectedFile);
+    formData.append('filename', selectedFile.name);
     formData.append('yolo_conf', settings.yolo_conf.toString());
     formData.append('motion_threshold', settings.motion_threshold.toString());
     formData.append('padding_percent', settings.padding_percent.toString());

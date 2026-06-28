@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Car, Home as HomeIcon, BarChart3, Sliders, Info } from 'lucide-react';
+import { Car, Home as HomeIcon, BarChart3, Clock, Sliders, Info } from 'lucide-react';
 
 import Home from './pages/Home';
 import Results from './pages/Results';
+import History from './pages/History';
 import Settings from './pages/Settings';
 import About from './pages/About';
 
@@ -29,6 +30,11 @@ function Navigation() {
           <li>
             <Link to="/results" className={`nav-link ${location.pathname === '/results' ? 'active' : ''}`}>
               <BarChart3 size={18} /> Analytics
+            </Link>
+          </li>
+          <li>
+            <Link to="/history" className={`nav-link ${location.pathname === '/history' ? 'active' : ''}`}>
+              <Clock size={18} /> History
             </Link>
           </li>
           <li>
@@ -75,6 +81,10 @@ export default function App() {
             <Route 
               path="/results" 
               element={<Results analysisData={analysisData} />} 
+            />
+            <Route 
+              path="/history" 
+              element={<History onSelectAnalysis={(data) => setAnalysisData(data)} />} 
             />
             <Route 
               path="/settings" 

@@ -9,6 +9,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,19 +27,35 @@ public class TrafficDetectionServer {
         server.createContext("/api/health", new HealthHandler());
         server.createContext("/api/settings", new SettingsHandler());
         server.createContext("/api/detect", new DetectHandler());
+        server.createContext("/api/history", new HistoryHandler());
 
         server.setExecutor(Executors.newFixedThreadPool(10));
         System.out.println("==================================================");
         System.out.println("🚀 Traffic Detection Java Backend Service Running!");
-        System.out.println("PORT       : " + PORT);
-        System.out.println("HEALTH CHECK: http://localhost:" + PORT + "/api/health");
+        System.out.println("PORT          : " + PORT);
+        System.out.println("HEALTH CHECK  : http://localhost:" + PORT + "/api/health");
+        System.out.println("HISTORY ENDPT : http://localhost:" + PORT + "/api/history");
         System.out.println("==================================================");
         server.start();
     }
 
+    private static File getHistoryDir() {
+        File dir = new File("history");
+        if (!dir.exists()) {
+            File alt = new File("backend/history");
+            if (alt.getParentFile() != null && alt.getParentFile().exists()) {
+                dir = alt;
+            }
+        }
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
     private static void enableCORS(HttpExchange exchange) {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
@@ -76,6 +95,70 @@ public class TrafficDetectionServer {
         }
     }
 
+    static class HistoryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            enableCORS(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            String method = exchange.getRequestMethod();
+            if ("GET".equalsIgnoreCase(method)) {
+                File dir = getHistoryDir();
+                File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+                StringBuilder sb = new StringBuilder("[");
+                if (files != null && files.length > 0) {
+                    Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+                    for (int i = 0; i < files.length; i++) {
+                        try {
+                            String content = Files.readString(files[i].toPath(), StandardCharsets.UTF_8);
+                            sb.append(content);
+                            if (i < files.length - 1) {
+                                sb.append(",");
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+                sb.append("]");
+                byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, bytes.length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(bytes);
+                os.close();
+            } else if ("DELETE".equalsIgnoreCase(method)) {
+                String query = exchange.getRequestURI().getQuery();
+                File dir = getHistoryDir();
+                if (query != null && query.contains("id=")) {
+                    String id = query.substring(query.indexOf("id=") + 3);
+                    if (id.contains("&")) id = id.substring(0, id.indexOf("&"));
+                    File file = new File(dir, id + ".json");
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                } else {
+                    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+                    if (files != null) {
+                        for (File f : files) f.delete();
+                    }
+                }
+                String resp = "{\"status\":\"success\"}";
+                byte[] bytes = resp.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, bytes.length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(bytes);
+                os.close();
+            } else {
+                sendError(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+
     static class DetectHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -86,7 +169,7 @@ public class TrafficDetectionServer {
             }
 
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                sendError(exchange, 450, "Method Not Allowed");
+                sendError(exchange, 405, "Method Not Allowed");
                 return;
             }
 
@@ -105,7 +188,6 @@ public class TrafficDetectionServer {
                 InputStream is = exchange.getRequestBody();
                 byte[] requestBytes = is.readAllBytes();
 
-                // Extract image file and params
                 File tempImage = File.createTempFile("traffic_upload_", ".jpg");
                 tempImage.deleteOnExit();
 
@@ -115,8 +197,8 @@ public class TrafficDetectionServer {
                 String motionThreshold = formParams.getOrDefault("motion_threshold", "0.90");
                 String paddingPercent = formParams.getOrDefault("padding_percent", "0.15");
                 String minCropPx = formParams.getOrDefault("min_crop_px", "120");
+                String originalFilename = formParams.getOrDefault("filename", "Traffic_Surveillance.jpg");
 
-                // Determine python executable and script path
                 String pythonCmd = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
 
                 File currentDir = new File(".").getCanonicalFile();
@@ -168,6 +250,19 @@ public class TrafficDetectionServer {
                     return;
                 }
 
+                // Inject run metadata (run_id, timestamp, filename) and persist to history
+                String runId = UUID.randomUUID().toString();
+                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                String metaFields = "\"run_id\":\"" + runId + "\",\"timestamp\":\"" + timestamp + "\",\"filename\":\"" + escapeJson(originalFilename) + "\",";
+                rawStr = "{" + metaFields + rawStr.substring(1);
+
+                try {
+                    File historyFile = new File(getHistoryDir(), runId + ".json");
+                    Files.writeString(historyFile.toPath(), rawStr, StandardCharsets.UTF_8);
+                } catch (Exception ex) {
+                    System.err.println("Failed to write history file: " + ex.getMessage());
+                }
+
                 byte[] responseBytes = rawStr.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().add("Content-Type", "application/json");
                 exchange.sendResponseHeaders(200, responseBytes.length);
@@ -194,25 +289,35 @@ public class TrafficDetectionServer {
                 int partEnd = nextBoundary;
                 pos = nextBoundary + boundaryBytes.length;
                 
-                if (partStart == 0) continue; // Skip initial boundary
+                if (partStart == 0) continue;
                 
-                // Parse headers within part
                 int headerEnd = indexOf(data, "\r\n\r\n".getBytes(StandardCharsets.UTF_8), partStart);
                 if (headerEnd == -1 || headerEnd > partEnd) continue;
                 
                 String headers = new String(data, partStart, headerEnd - partStart, StandardCharsets.UTF_8);
                 int contentStart = headerEnd + 4;
-                int contentEnd = partEnd - 2; // Subtract \r\n before next boundary
+                int contentEnd = partEnd - 2;
                 
                 if (contentEnd < contentStart) continue;
                 
                 if (headers.contains("filename=")) {
-                    // This is the file part
+                    int fnIdx = headers.indexOf("filename=");
+                    if (fnIdx != -1) {
+                        String sub = headers.substring(fnIdx + 9);
+                        if (sub.startsWith("\"")) {
+                            sub = sub.substring(1);
+                            int endQ = sub.indexOf("\"");
+                            if (endQ != -1) sub = sub.substring(0, endQ);
+                        } else {
+                            int endSp = sub.indexOf("\r\n");
+                            if (endSp != -1) sub = sub.substring(0, endSp);
+                        }
+                        params.put("filename", sub.trim());
+                    }
                     FileOutputStream fos = new FileOutputStream(tempImage);
                     fos.write(data, contentStart, contentEnd - contentStart);
                     fos.close();
                 } else if (headers.contains("name=")) {
-                    // Form field part
                     int nameIdx = headers.indexOf("name=\"") + 6;
                     int endNameIdx = headers.indexOf("\"", nameIdx);
                     if (nameIdx > 5 && endNameIdx > nameIdx) {
@@ -238,43 +343,43 @@ public class TrafficDetectionServer {
             }
             return -1;
         }
+    }
 
-        private static String escapeJson(String input) {
-            if (input == null) return "";
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < input.length(); i++) {
-                char ch = input.charAt(i);
-                switch (ch) {
-                    case '"': sb.append("\\\""); break;
-                    case '\\': sb.append("\\\\"); break;
-                    case '\n': sb.append("\\n"); break;
-                    case '\r': sb.append("\\r"); break;
-                    case '\t': sb.append("\\t"); break;
-                    case '\b': sb.append("\\b"); break;
-                    case '\f': sb.append("\\f"); break;
-                    default:
-                        if (ch < ' ') {
-                            String hex = Integer.toHexString(ch);
-                            sb.append("\\u");
-                            for (int k = 0; k < 4 - hex.length(); k++) sb.append('0');
-                            sb.append(hex);
-                        } else {
-                            sb.append(ch);
-                        }
-                        break;
-                }
+    private static String escapeJson(String input) {
+        if (input == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char ch = input.charAt(i);
+            switch (ch) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                case '\b': sb.append("\\b"); break;
+                case '\f': sb.append("\\f"); break;
+                default:
+                    if (ch < ' ') {
+                        String hex = Integer.toHexString(ch);
+                        sb.append("\\u");
+                        for (int k = 0; k < 4 - hex.length(); k++) sb.append('0');
+                        sb.append(hex);
+                    } else {
+                        sb.append(ch);
+                    }
+                    break;
             }
-            return sb.toString();
         }
+        return sb.toString();
+    }
 
-        private void sendError(HttpExchange exchange, int code, String message) throws IOException {
-            String jsonErr = "{\"error\":\"" + escapeJson(message) + "\"}";
-            byte[] bytes = jsonErr.getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(code, bytes.length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(bytes);
-            os.close();
-        }
+    private static void sendError(HttpExchange exchange, int code, String message) throws IOException {
+        String jsonErr = "{\"error\":\"" + escapeJson(message) + "\"}";
+        byte[] bytes = jsonErr.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(code, bytes.length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(bytes);
+        os.close();
     }
 }
