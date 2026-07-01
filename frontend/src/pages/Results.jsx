@@ -24,7 +24,7 @@ export default function Results({ analysisData }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="flex-responsive" style={{ marginBottom: '2rem' }}>
         <div>
           <h2>🚦 Traffic Motion Analytics Results</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -125,7 +125,7 @@ export default function Results({ analysisData }) {
 
       {/* Cropped Vehicles Grid */}
       <div className="glass-card" style={{ marginTop: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex-responsive" style={{ marginBottom: '1rem' }}>
           <h3>🔍 Isolated Vehicle Crops ({vehicles.length})</h3>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Click any vehicle crop to open Edge Sharpness Debug Strip</span>
         </div>

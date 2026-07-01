@@ -75,7 +75,7 @@ export default function About() {
             <Cpu size={24} style={{ color: 'var(--standing-green)' }} /> 
             System Architecture & Network Ports
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', fontSize: '0.95rem' }}>
+          <div className="grid-responsive-about" style={{ fontSize: '0.95rem' }}>
             <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
               <h4 style={{ color: 'var(--accent-cyan)', marginBottom: '0.5rem' }}>💻 React Frontend</h4>
               <p style={{ color: 'var(--text-secondary)' }}>• Environment: React.js (Vite Engine)</p>

@@ -69,14 +69,14 @@ export default function History({ onSelectAnalysis }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="flex-responsive" style={{ marginBottom: '2rem' }}>
         <div>
           <h2>📜 Historical Detection Runs</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
             Permanent server-side archives of all surveillance analyses performed to date.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button className="btn-primary" style={{ background: 'rgba(255,255,255,0.08)', boxShadow: 'none' }} onClick={fetchHistory}>
             <RefreshCw size={18} /> Refresh
           </button>
@@ -121,6 +121,7 @@ export default function History({ onSelectAnalysis }) {
               <div key={item.run_id} className="glass-card" style={{ borderLeft: isExpanded ? '4px solid var(--accent-cyan)' : '1px solid var(--border-color)' }}>
                 {/* Header bar for card */}
                 <div 
+                  className="history-item-header"
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                   onClick={() => setExpandedId(isExpanded ? null : item.run_id)}
                 >
@@ -138,8 +139,8 @@ export default function History({ onSelectAnalysis }) {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div className="history-item-meta" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                       <span className="crop-badge" style={{ background: 'rgba(0,210,255,0.15)', color: 'var(--accent-cyan)' }}>
                         Total: {total_vehicles}
                       </span>
@@ -151,7 +152,7 @@ export default function History({ onSelectAnalysis }) {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       <button 
                         className="btn-primary" 
                         style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
