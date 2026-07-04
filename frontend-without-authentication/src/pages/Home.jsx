@@ -78,46 +78,63 @@ export default function Home({ onAnalysisComplete, settings }) {
       </div>
 
       <div className="upload-container">
-        <div 
-          className={`dropzone ${dragActive ? 'drag-over' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={handleDrop}
-          onClick={() => document.getElementById('fileInput').click()}
-        >
-          <input 
-            type="file" 
-            id="fileInput" 
-            style={{ display: 'none' }} 
-            accept="image/*"
-            onChange={(e) => e.target.files[0] && handleFileChange(e.target.files[0])}
-          />
-          <div className="dropzone-icon">
-            <UploadCloud size={36} />
+        {isLoading ? (
+          <div className="glass-card animate-pulse" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '5rem 2rem', textAlign: 'center', minHeight: '350px', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'relative', marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Car size={64} className="animate-car-drive" style={{ color: 'var(--accent-cyan)' }} />
+              <div className="road-container" style={{ width: '150px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '8px', position: 'relative' }}>
+                <div className="animate-road-move" style={{ width: '200%', height: '100%', background: 'repeating-linear-gradient(90deg, transparent, transparent 10px, var(--accent-cyan) 10px, var(--accent-cyan) 20px)', position: 'absolute', left: 0, top: 0 }}></div>
+              </div>
+            </div>
+            <h2>Analyzing Traffic Imagery...</h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', maxWidth: '400px' }}>
+              Running YOLOv8 vehicle detection and calculating Laplacian edge-sharpness motion scoring on detected crops.
+            </p>
           </div>
-          <div className="dropzone-text">
-            {selectedFile ? selectedFile.name : 'Click or Drag & Drop Traffic Image Here'}
-          </div>
-          <div className="dropzone-subtext">
-            Supports High-Resolution Surveillance JPEGs, PNGs up to 20MB
-          </div>
-        </div>
+        ) : (
+          <>
+            <div 
+              className={`dropzone ${dragActive ? 'drag-over' : ''}`}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('fileInput').click()}
+            >
+              <input 
+                type="file" 
+                id="fileInput" 
+                style={{ display: 'none' }} 
+                accept="image/*"
+                onChange={(e) => e.target.files[0] && handleFileChange(e.target.files[0])}
+              />
+              <div className="dropzone-icon">
+                <UploadCloud size={36} />
+              </div>
+              <div className="dropzone-text">
+                {selectedFile ? selectedFile.name : 'Click or Drag & Drop Traffic Image Here'}
+              </div>
+              <div className="dropzone-subtext">
+                Supports High-Resolution Surveillance JPEGs, PNGs up to 20MB
+              </div>
+            </div>
 
-        {previewUrl && (
-          <div className="glass-card" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Selected Image Preview</h3>
-            <img 
-              src={previewUrl} 
-              alt="Preview" 
-              style={{ maxHeight: '350px', maxWidth: '100%', borderRadius: 'var(--radius-sm)', objectFit: 'contain' }} 
-            />
-          </div>
-        )}
+            {previewUrl && (
+              <div className="glass-card" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                <h3 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Selected Image Preview</h3>
+                <img 
+                  src={previewUrl} 
+                  alt="Preview" 
+                  style={{ maxHeight: '350px', maxWidth: '100%', borderRadius: 'var(--radius-sm)', objectFit: 'contain' }} 
+                />
+              </div>
+            )}
 
-        {errorStr && (
-          <div style={{ color: 'var(--moving-red)', background: 'rgba(255,71,87,0.1)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', textAlign: 'center', border: '1px solid var(--moving-red)' }}>
-            ⚠️ {errorStr}
-          </div>
+            {errorStr && (
+              <div style={{ color: 'var(--moving-red)', background: 'rgba(255,71,87,0.1)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', textAlign: 'center', border: '1px solid var(--moving-red)' }}>
+                ⚠️ {errorStr}
+              </div>
+            )}
+          </>
         )}
 
         <div style={{ textAlign: 'center' }}>
@@ -127,12 +144,13 @@ export default function Home({ onAnalysisComplete, settings }) {
             disabled={!selectedFile || isLoading}
           >
             {isLoading ? (
-              <>
-                <Loader2 className="animate-spin" size={20} /> Processing YOLOv8 & Edge Pipeline...
-              </>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', justifyContent: 'center' }}>
+                <Car className="animate-car-drive" size={20} style={{ color: 'var(--accent-cyan)' }} />
+                <span>Analyzing...</span>
+              </div>
             ) : (
               <>
-                Run Motion Detection Pipeline <ArrowRight size={20} />
+                Analyze <ArrowRight size={20} />
               </>
             )}
           </button>

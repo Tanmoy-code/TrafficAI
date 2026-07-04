@@ -1132,3 +1132,36 @@ body {
   cursor: pointer;
 }
 
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes carDrive {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-car-drive {
+  animation: carDrive 0.4s ease-in-out infinite;
+}
+
+@keyframes roadMove {
+  0% { left: 0; }
+  100% { left: -20px; }
+}
+
+.animate-road-move {
+  animation: roadMove 0.5s linear infinite;
+}
+

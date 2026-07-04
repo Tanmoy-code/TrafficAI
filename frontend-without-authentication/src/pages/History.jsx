@@ -15,16 +15,21 @@ export default function History({ onSelectAnalysis }) {
     setErrorStr('');
     try {
       const backendHost = window.location.hostname || 'localhost';
-      const res = await fetch(`http://${backendHost}:5000/api/history`);
+      const url = `http://${backendHost}:5000/api/history`;
+      console.log('Fetching history from:', url);
+      const res = await fetch(url);
+      console.log('History response status:', res.status);
       if (!res.ok) {
-        throw new Error('Failed to fetch history from server.');
+        throw new Error(`Failed to fetch history from server (status: ${res.status}).`);
       }
       const data = await res.json();
+      console.log('Loaded history items:', data.length);
       setHistoryItems(data);
       if (data.length > 0 && !expandedId) {
         setExpandedId(data[0].run_id);
       }
     } catch (err) {
+      console.error('Error fetching history:', err);
       setErrorStr(err.message || 'Could not load history from backend.');
     } finally {
       setLoading(false);
