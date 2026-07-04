@@ -91,6 +91,17 @@ else
     echo "  ⚠️ Warning: 'frontend' directory not found!"
 fi
 
+# Build React Frontend Without Auth
+if [ -d "frontend-without-authentication" ]; then
+    echo "  -> Building React frontend without auth..."
+    cd "$SCRIPT_DIR/frontend-without-authentication"
+    npm install
+    npm run build
+    cd "$SCRIPT_DIR"
+else
+    echo "  ⚠️ Warning: 'frontend-without-authentication' directory not found!"
+fi
+
 # 4. Start Services under PM2 Process Supervisor
 echo "⚡ [4/5] Launching Services under PM2 Process Supervisor..."
 
@@ -122,6 +133,18 @@ elif [ -d "frontend" ]; then
     cd "$SCRIPT_DIR"
 fi
 
+# Start React Frontend Without Auth on Port 6000
+if [ -d "frontend-without-authentication/dist" ]; then
+    echo "  -> Starting traffic-frontend-noauth service on port 6000..."
+    cd "$SCRIPT_DIR/frontend-without-authentication"
+    pm2 start "npx serve -s dist -l 6000" --name "traffic-frontend-noauth"
+    cd "$SCRIPT_DIR"
+elif [ -d "frontend-without-authentication" ]; then
+    cd "$SCRIPT_DIR/frontend-without-authentication"
+    pm2 start "npm run dev -- --host 0.0.0.0 --port 6000" --name "traffic-frontend-noauth"
+    cd "$SCRIPT_DIR"
+fi
+
 # 5. Persist PM2 configuration across reboots
 echo "💾 [5/5] Saving PM2 state and configuring system startup..."
 pm2 save --force || true
@@ -137,7 +160,8 @@ env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u "$C
 echo "=============================================================================="
 echo "🎉 TrafficAI EC2 Deployment Completed Successfully!"
 echo "------------------------------------------------------------------------------"
-echo "🌐 Frontend Access  : http://13.127.118.27:4000"
-echo "⚙️ Backend API      : http://13.127.118.27:5000/api/health"
-echo "👑 Admin Credentials: Username: admin | Password: Colon#2420"
+echo "🌐 Auth Frontend Access   : http://13.127.118.27:4000"
+echo "🌐 No-Auth Frontend Access : http://13.127.118.27:6000"
+echo "⚙️ Backend API            : http://13.127.118.27:5000/api/health"
+echo "👑 Admin Credentials      : Username: admin | Password: Colon#2420"
 echo "=============================================================================="

@@ -1,0 +1,86 @@
+// TrafficAI - Backend CI/CD Jenkins Pipeline
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'NEXUS_HOST_PORT', defaultValue: 'localhost:8081', description: 'Nexus Repository Host and Port')
+        string(name: 'NEXUS_CREDENTIALS_ID', defaultValue: 'nexus-credentials', description: 'Jenkins Credentials ID for Nexus')
+        string(name: 'DEPLOY_SERVER', defaultValue: '13.127.118.27', description: 'Target Server IP Address')
+        string(name: 'DEPLOY_USER', defaultValue: 'ubuntu', description: 'SSH Username for Target Server')
+        string(name: 'SSH_CREDENTIALS_ID', defaultValue: 'ssh-deploy-key', description: 'Jenkins Credentials ID for SSH deployment')
+        string(name: 'VERSION', defaultValue: '1.0.0', description: 'Release Version')
+    }
+
+    environment {
+        // Paths & configurations
+        NEXUS_URL = "http://${params.NEXUS_HOST_PORT}"
+        POM_PATH = "backend/pom.xml"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
+
+        stage('Verify Environment') {
+            steps {
+                sh 'java -version'
+                sh 'mvn -version'
+            }
+        }
+
+        stage('Build & Package') {
+            steps {
+                echo 'Compiling Java Backend and packaging to JAR...'
+                // Build the maven project using the source files without changing the pom
+                sh 'mvn -f backend/pom.xml clean package -DskipTests'
+            }
+        }
+
+        stage('Publish to Nexus') {
+            steps {
+                echo 'Uploading built JAR to Nexus Repository...'
+                withCredentials([usernamePassword(credentialsId: params.NEXUS_CREDENTIALS_ID, usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    // Upload using direct curl invocation (keeps codebase untouched, no pom.xml modifications required!)
+                    sh """
+                        curl -v -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                             --upload-file backend/target/traffic-backend-${params.VERSION}.jar \
+                             "${NEXUS_URL}/repository/maven-releases/com/traffic/traffic-backend/${params.VERSION}/traffic-backend-${params.VERSION}.jar"
+                    """
+                }
+            }
+        }
+
+        stage('Deploy Backend Service') {
+            steps {
+                echo "Copying artifact and deploying backend to ${params.DEPLOY_SERVER}..."
+                // Bind the SSH private key credentials for scp and ssh commands
+                sshagent([params.SSH_CREDENTIALS_ID]) {
+                    // 1. Copy the built JAR to the temp directory on remote server
+                    sh "scp -o StrictHostKeyChecking=no backend/target/traffic-backend-${params.VERSION}.jar ${params.DEPLOY_USER}@${params.DEPLOY_SERVER}:/tmp/traffic-backend-1.0.0.jar"
+                    
+                    // 2. Copy the deployment helper script
+                    sh "scp -o StrictHostKeyChecking=no deployment/deploy-backend.sh ${params.DEPLOY_USER}@${params.DEPLOY_SERVER}:/tmp/deploy-backend.sh"
+                    
+                    // 3. Execute the deployment script remotely
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${params.DEPLOY_USER}@${params.DEPLOY_SERVER} \
+                        "chmod +x /tmp/deploy-backend.sh && /tmp/deploy-backend.sh"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Backend CI/CD Pipeline executed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Please check build logs for errors.'
+        }
+    }
+}

@@ -10,8 +10,8 @@ An intelligent, reactive, and responsive full-stack computer vision web applicat
 
 ```
                                ┌────────────────────────────────────────┐
-                               │     User Browser (React Client)        │
-                               │         http://localhost:4000          │
+                               │   http://localhost:4000 (With Auth)    │
+                               │   http://localhost:6000 (Without Auth) │
                                └───────────────────┬────────────────────┘
                                                    │
                                          POST /api/detect (Multipart)
@@ -36,7 +36,8 @@ An intelligent, reactive, and responsive full-stack computer vision web applicat
 
 ## 🛠️ Technology Stack & Ports
 
-- **Frontend (`/frontend`)**: React.js, Vite, Lucide Icons, Modern Dark Glassmorphism CSS System. Running on **Port 4000**.
+- **Auth Frontend (`/frontend`)**: React.js, Vite. Running on **Port 4000**.
+- **No-Auth Frontend (`/frontend-without-authentication`)**: React.js, Vite. Running on **Port 6000**.
 - **Backend (`/backend`)**: Java REST HTTP Service (JDK 17+), Gson / Standard HTTP Handler. Running on **Port 5000**.
 - **ML Engine (`/backend/python_pipeline`)**: Python 3.11, Ultralytics YOLOv8 (`yolov8m.pt`), OpenCV (`cv2`), NumPy, PIL.
 
@@ -87,25 +88,27 @@ mvn compile exec:java
 
 ---
 
-### 2️⃣ Step 2: Start the React Frontend (Port 4000)
+### 2️⃣ Step 2: Start the React Frontend (Port 4000 or Port 6000)
 
+Depending on whether you want authentication enabled or bypassed, run one of the following:
+
+#### Option A: With User Authentication (Port 4000)
 Open a **new** terminal window and navigate to the `frontend` directory:
-
 ```bash
 cd frontend
-```
-
-Install dependencies (if running for the first time):
-```bash
 npm install
-```
-
-Start the Vite development server:
-```bash
 npm run dev
 ```
-
 > 🌐 **Access Website**: Open your browser and navigate to **[http://localhost:4000](http://localhost:4000)**.
+
+#### Option B: Without User Authentication (Port 6000)
+Open a **new** terminal window and navigate to the `frontend-without-authentication` directory:
+```bash
+cd frontend-without-authentication
+npm install
+npm run dev
+```
+> 🌐 **Access Website**: Open your browser and navigate to **[http://localhost:6000](http://localhost:6000)**.
 
 ---
 
@@ -129,12 +132,17 @@ Website/
 │   │   └── pipeline.py             # Core Computer Vision Pipeline
 │   ├── pom.xml                     # Maven Configuration
 │   └── run.bat                     # Windows Startup Batch Script
-├── frontend/                       # React.js SPA Frontend
+├── frontend/                       # React.js SPA Frontend (With Auth, Port 4000)
 │   ├── src/
-│   │   ├── pages/                  # Home, Results, Settings, About Pages
-│   │   ├── App.jsx                 # Router & Navigation Assembly
-│   │   └── index.css               # Design System & Glassmorphism Theme
+│   │   ├── App.jsx                 # Configured with Auth context & ProtectedRoutes
+│   │   └── ...
 │   ├── vite.config.js              # Configured for Port 4000
+│   └── package.json
+├── frontend-without-authentication/# React.js SPA Frontend (No Auth, Port 6000)
+│   ├── src/
+│   │   ├── App.jsx                 # Direct rendering without Auth
+│   │   └── ...
+│   ├── vite.config.js              # Configured for Port 6000
 │   └── package.json
 ├── detection.ipynb                 # Original Research Jupyter Notebook
 └── README.md                       # Local Execution Guide & System Docs

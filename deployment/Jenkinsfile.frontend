@@ -1,0 +1,92 @@
+// TrafficAI - Frontend CI/CD Jenkins Pipeline
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'NEXUS_HOST_PORT', defaultValue: 'localhost:8081', description: 'Nexus Repository Host and Port')
+        string(name: 'NEXUS_CREDENTIALS_ID', defaultValue: 'nexus-credentials', description: 'Jenkins Credentials ID for Nexus')
+        string(name: 'DEPLOY_SERVER', defaultValue: '13.127.118.27', description: 'Target Server IP Address')
+        string(name: 'DEPLOY_USER', defaultValue: 'ubuntu', description: 'SSH Username for Target Server')
+        string(name: 'SSH_CREDENTIALS_ID', defaultValue: 'ssh-deploy-key', description: 'Jenkins Credentials ID for SSH deployment')
+        string(name: 'VERSION', defaultValue: '1.0.0', description: 'Release Version')
+    }
+
+    environment {
+        NEXUS_URL = "http://${params.NEXUS_HOST_PORT}"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
+
+        stage('Verify Node Environment') {
+            steps {
+                sh 'node -v'
+                sh 'npm -v'
+            }
+        }
+
+        stage('Install & Build') {
+            steps {
+                echo 'Installing dependencies and compiling React frontend via Vite...'
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                    
+                    echo 'Compressing build static assets...'
+                    // Pack all files inside the dist folder into a tarball
+                    sh 'tar -czf dist.tar.gz -C dist .'
+                }
+            }
+        }
+
+        stage('Publish Build to Nexus') {
+            steps {
+                echo 'Uploading frontend tarball to Nexus Raw Repository...'
+                withCredentials([usernamePassword(credentialsId: params.NEXUS_CREDENTIALS_ID, usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    // Uploads to a raw repository (e.g. named raw-deploy) to archive static distributions
+                    sh """
+                        curl -v -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                             --upload-file frontend/dist.tar.gz \
+                             "${NEXUS_URL}/repository/raw-deploy/traffic-frontend/${params.VERSION}/dist.tar.gz"
+                    """
+                }
+            }
+        }
+
+        stage('Deploy Frontend & Nginx') {
+            steps {
+                echo "Copying distribution assets and configuring Nginx on ${params.DEPLOY_SERVER}..."
+                sshagent([params.SSH_CREDENTIALS_ID]) {
+                    // 1. Copy the tarball to target server
+                    sh "scp -o StrictHostKeyChecking=no frontend/dist.tar.gz ${params.DEPLOY_USER}@${params.DEPLOY_SERVER}:/tmp/dist.tar.gz"
+                    
+                    // 2. Copy the Nginx secure configuration template
+                    sh "scp -o StrictHostKeyChecking=no deployment/nginx.conf ${params.DEPLOY_USER}@${params.DEPLOY_SERVER}:/tmp/nginx.conf"
+                    
+                    // 3. Copy the frontend deployment script
+                    sh "scp -o StrictHostKeyChecking=no deployment/deploy-frontend.sh ${params.DEPLOY_USER}@${params.DEPLOY_SERVER}:/tmp/deploy-frontend.sh"
+                    
+                    // 4. Run the remote script to swap assets and reload Nginx
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${params.DEPLOY_USER}@${params.DEPLOY_SERVER} \
+                        "chmod +x /tmp/deploy-frontend.sh && /tmp/deploy-frontend.sh"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Frontend CI/CD Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check build logs for details.'
+        }
+    }
+}
