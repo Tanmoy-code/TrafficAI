@@ -38,9 +38,9 @@ The application is structured as a decoupled, multi-tier system:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                    REACT FRONTENDS (PORT 4000 & 6000)                    │
+│                    REACT FRONTENDS (PORT 4000 & 4001)                    │
 │  - http://localhost:4000 (With User Auth & Management)                   │
-│  - http://localhost:6000 (Without User Auth / Open Dashboard)            │
+│  - http://localhost:4001 (Without User Auth / Open Dashboard)            │
 │  - Modern Dark Glassmorphism UI (Outfit font, CSS variables)             │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │
@@ -142,7 +142,7 @@ To prevent library logging (e.g., download progress bars or PyTorch warnings) fr
 
 Locations: 
 - `frontend/` (With User Authentication, port 4000)
-- `frontend-without-authentication/` (Without User Authentication, port 6000)
+- `frontend-without-authentication/` (Without User Authentication, port 4001)
 
 ### Page Responsibilities
 1. **`Home.jsx`**: Manages file selection, drag-and-drop state, and dispatches multipart HTTP POST requests to `http://localhost:5000/api/detect`.
@@ -181,7 +181,7 @@ Website/
 │
 └── frontend-without-authentication/ # React Single Page Application (Without Auth)
     ├── index.html                   # HTML template & SEO metadata
-    ├── vite.config.js               # Vite config locked to Port 6000
+    ├── vite.config.js               # Vite config locked to Port 4001
     ├── package.json                 # React dependencies
     └── src/
         ├── App.jsx                  # Router without Auth (Direct rendering)
@@ -219,14 +219,14 @@ npm run dev
 ```
 *Access App*: Navigate to **[http://localhost:4000](http://localhost:4000)** in your browser.
 
-#### 3. Start the React Frontend without Authentication (Port 6000)
+#### 3. Start the React Frontend without Authentication (Port 4001)
 Open terminal 3:
 ```bash
 cd frontend-without-authentication
 npm install
 npm run dev
 ```
-*Access App*: Navigate to **[http://localhost:6000](http://localhost:6000)** in your browser.
+*Access App*: Navigate to **[http://localhost:4001](http://localhost:4001)** in your browser.
 
 ---
 

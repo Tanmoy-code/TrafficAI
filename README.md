@@ -11,7 +11,7 @@ An intelligent, reactive, and responsive full-stack computer vision web applicat
 ```
                                ┌────────────────────────────────────────┐
                                │   http://localhost:4000 (With Auth)    │
-                               │   http://localhost:6000 (Without Auth) │
+                               │   http://localhost:4001 (Without Auth) │
                                └───────────────────┬────────────────────┘
                                                    │
                                          POST /api/detect (Multipart)
@@ -37,7 +37,7 @@ An intelligent, reactive, and responsive full-stack computer vision web applicat
 ## 🛠️ Technology Stack & Ports
 
 - **Auth Frontend (`/frontend`)**: React.js, Vite. Running on **Port 4000**.
-- **No-Auth Frontend (`/frontend-without-authentication`)**: React.js, Vite. Running on **Port 6000**.
+- **No-Auth Frontend (`/frontend-without-authentication`)**: React.js, Vite. Running on **Port 4001**.
 - **Backend (`/backend`)**: Java REST HTTP Service (JDK 17+), Gson / Standard HTTP Handler. Running on **Port 5000**.
 - **ML Engine (`/backend/python_pipeline`)**: Python 3.11, Ultralytics YOLOv8 (`yolov8m.pt`), OpenCV (`cv2`), NumPy, PIL.
 
@@ -88,7 +88,7 @@ mvn compile exec:java
 
 ---
 
-### 2️⃣ Step 2: Start the React Frontend (Port 4000 or Port 6000)
+### 2️⃣ Step 2: Start the React Frontend (Port 4000 or Port 4001)
 
 Depending on whether you want authentication enabled or bypassed, run one of the following:
 
@@ -101,14 +101,14 @@ npm run dev
 ```
 > 🌐 **Access Website**: Open your browser and navigate to **[http://localhost:4000](http://localhost:4000)**.
 
-#### Option B: Without User Authentication (Port 6000)
+#### Option B: Without User Authentication (Port 4001)
 Open a **new** terminal window and navigate to the `frontend-without-authentication` directory:
 ```bash
 cd frontend-without-authentication
 npm install
 npm run dev
 ```
-> 🌐 **Access Website**: Open your browser and navigate to **[http://localhost:6000](http://localhost:6000)**.
+> 🌐 **Access Website**: Open your browser and navigate to **[http://localhost:4001](http://localhost:4001)**.
 
 ---
 
@@ -138,11 +138,11 @@ Website/
 │   │   └── ...
 │   ├── vite.config.js              # Configured for Port 4000
 │   └── package.json
-├── frontend-without-authentication/# React.js SPA Frontend (No Auth, Port 6000)
+├── frontend-without-authentication/# React.js SPA Frontend (No Auth, Port 4001)
 │   ├── src/
 │   │   ├── App.jsx                 # Direct rendering without Auth
 │   │   └── ...
-│   ├── vite.config.js              # Configured for Port 6000
+│   ├── vite.config.js              # Configured for Port 4001
 │   └── package.json
 ├── detection.ipynb                 # Original Research Jupyter Notebook
 └── README.md                       # Local Execution Guide & System Docs

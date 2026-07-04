@@ -133,15 +133,15 @@ elif [ -d "frontend" ]; then
     cd "$SCRIPT_DIR"
 fi
 
-# Start React Frontend Without Auth on Port 6000
+# Start React Frontend Without Auth on Port 4001
 if [ -d "frontend-without-authentication/dist" ]; then
-    echo "  -> Starting traffic-frontend-noauth service on port 6000..."
+    echo "  -> Starting traffic-frontend-noauth service on port 4001..."
     cd "$SCRIPT_DIR/frontend-without-authentication"
-    pm2 start "npx serve -s dist -l 6000" --name "traffic-frontend-noauth"
+    pm2 start "npx serve -s dist -l 4001" --name "traffic-frontend-noauth"
     cd "$SCRIPT_DIR"
 elif [ -d "frontend-without-authentication" ]; then
     cd "$SCRIPT_DIR/frontend-without-authentication"
-    pm2 start "npm run dev -- --host 0.0.0.0 --port 6000" --name "traffic-frontend-noauth"
+    pm2 start "npm run dev -- --host 0.0.0.0 --port 4001" --name "traffic-frontend-noauth"
     cd "$SCRIPT_DIR"
 fi
 
@@ -161,7 +161,7 @@ echo "==========================================================================
 echo "🎉 TrafficAI EC2 Deployment Completed Successfully!"
 echo "------------------------------------------------------------------------------"
 echo "🌐 Auth Frontend Access   : http://13.127.118.27:4000"
-echo "🌐 No-Auth Frontend Access : http://13.127.118.27:6000"
+echo "🌐 No-Auth Frontend Access : http://13.127.118.27:4001"
 echo "⚙️ Backend API            : http://13.127.118.27:5000/api/health"
 echo "👑 Admin Credentials      : Username: admin | Password: Colon#2420"
 echo "=============================================================================="

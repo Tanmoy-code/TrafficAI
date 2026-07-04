@@ -108,7 +108,7 @@ export default function App() {
         <footer className="footer">
           <p>🚗 Traffic Detection & Edge-Sharpness Classification Pipeline © 2026</p>
           <p style={{ marginTop: '0.4rem', fontSize: '0.8rem' }}>
-            Powered by YOLOv8 | React.js Frontend (Port 6000) | Java Backend REST API (Port 5000)
+            Powered by YOLOv8 | React.js Frontend (Port 4001) | Java Backend REST API (Port 5000)
           </p>
         </footer>
       </div>
