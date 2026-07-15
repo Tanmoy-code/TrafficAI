@@ -70,11 +70,9 @@ export default function Home({ onAnalysisComplete, settings }) {
   return (
     <div>
       <div className="hero-section">
-        <h1 className="hero-title">🚗 Intelligent Traffic Pipeline</h1>
-        <p className="hero-subtitle">
-          Real-time AI vehicle detection with YOLOv8 & Laplacian edge-sharpness motion classification.
-          Upload CCTV or highway surveillance imagery to instantly detect moving and standing vehicles.
-        </p>
+        <h1 className="hero-title" style={{ fontSize: '2.2rem', lineHeight: '1.3' }}>
+          Classification of Stationary and Moving Vehicles using YOLOv8 and Multi-Metric Edge-Sharpness Analysis
+        </h1>
       </div>
 
       <div className="upload-container">
@@ -146,43 +144,15 @@ export default function Home({ onAnalysisComplete, settings }) {
             {isLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', justifyContent: 'center' }}>
                 <Car className="animate-car-drive" size={20} style={{ color: 'var(--accent-cyan)' }} />
-                <span>Analyzing...</span>
+                <span>Analyzing</span>
               </div>
             ) : (
-              <>
-                Analyze <ArrowRight size={20} />
-              </>
+              <span>analyze</span>
             )}
           </button>
         </div>
       </div>
 
-      {/* Feature Highlights Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '3rem' }}>
-        <div className="glass-card">
-          <Car size={32} style={{ color: 'var(--accent-cyan)', marginBottom: '1rem' }} />
-          <h3>YOLOv8 Detection</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-            Multi-class vehicle detection identifying cars, buses, trucks, motorcycles, and bicycles with high precision.
-          </p>
-        </div>
-
-        <div className="glass-card">
-          <Activity size={32} style={{ color: 'var(--standing-green)', marginBottom: '1rem' }} />
-          <h3>Edge Sharpness Analysis</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-            Triple-signal classification (Laplacian variance, Canny density, Sobel mean) to differentiate stationary vs moving motion blur.
-          </p>
-        </div>
-
-        <div className="glass-card">
-          <Cpu size={32} style={{ color: 'var(--moving-red)', marginBottom: '1rem' }} />
-          <h3>High-Quality Upscaling</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-            Enforces minimum crop dimensions with INTER_CUBIC interpolation to eliminate hazy, pixelated vehicle inspects.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
