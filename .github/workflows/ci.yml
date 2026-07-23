@@ -42,8 +42,8 @@ jobs:
         cd backend
         mvn -B package
 
-    # # Optional dependency check replacement
-    # - name: Generate dependency list
-    #   run: |
-    #     cd backend
-    #     mvn dependency:tree
+    # Optional dependency check replacement
+    - name: Generate dependency list
+      run: |
+        cd backend
+        mvn dependency:tree
