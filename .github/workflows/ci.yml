@@ -30,6 +30,7 @@ jobs:
         run: mvn --version
 
       - name: Build Project
+        working-directory: backend
         run: mvn clean package
 
       - name: Upload JAR
