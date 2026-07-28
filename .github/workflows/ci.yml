@@ -28,14 +28,7 @@ jobs:
 
       - name: Verify Maven
         run: mvn --version
-  
+
       - name: Build Project
         working-directory: backend
         run: mvn clean package
-
-      - name: Upload JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: java-jar
-          path: target/*.jar
-          if-no-files-found: error
